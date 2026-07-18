@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كشف علامات الفصل الدراسي</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root{
+    --ink: #1C2541;
+    --ink-light: #46527A;
+    --parchment: #EDE4CE;
+    --parchment-line: #D9CCA9;
+    --gold: #9C6B30;
+    --gold-soft: #C79A54;
+    --ledger-red: #A13D3D;
+    --pass-green: #4F6F52;
+    --paper: #F7F2E4;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(180deg, transparent, transparent 34px, var(--parchment-line) 35px),
+      var(--paper);
+    font-family:'Tajawal', sans-serif;
+    color: var(--ink);
+    min-height:100vh;
+    padding: 32px 16px 80px;
+  }
+
+  .sheet{
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 28px;
+  }
+
+  header h1{
+    font-family:'Amiri', serif;
+    font-weight:700;
+    font-size: clamp(28px, 5vw, 42px);
+    color: var(--ink);
+    margin: 0 0 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .rule{
+    width: 220px;
+    margin: 0 auto;
+    height: 6px;
+    background:
+      linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent),
+      transparent;
+    position:relative;
+  }
+  .rule::after{
+    content:"";
+    position:absolute;
+    left:50%; top:8px;
+    transform:translateX(-50%);
+    width:8px;height:8px;
+    background:var(--gold);
+    border-radius:50%;
+  }
+
+  .subtitle{
+    font-size:13px;
+    color: var(--ink-light);
+    margin-top: 14px;
+    letter-spacing: 0.5px;
+  }
+
+  .card{
+    background: rgba(255,255,255,0.55);
+    border: 1px solid var(--parchment-line);
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  }
+
+  .card h2{
+    font-family:'Amiri', serif;
+    font-size: 20px;
+    margin: 0 0 16px;
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .card h2 .num{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--gold);
+    font-size: 15px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    width: 24px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  table{
+    width:100%;
+    border-collapse: collapse;
+  }
+  thead th{
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-align: right;
+    padding: 6px 8px;
+    border-bottom: 2px solid var(--gold-soft);
+  }
+  tbody td{
+    padding: 8px;
+    border-bottom: 1px dashed var(--parchment-line);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+
+  input[type="text"], input[type="number"]{
+    width:100%;
+    padding: 8px 10px;
+    border: 1px solid var(--parchment-line);
+    border-radius: 4px;
+    background: #fff;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  input[type="text"]{ font-family:'Tajawal', sans-serif; }
+  input:focus{
+    outline: 2px solid var(--gold-soft);
+    outline-offset: 1px;
+  }
+  input.invalid{
+    border-color: var(--ledger-red);
+    outline: 2px solid var(--ledger-red);
+  }
+
+  .row-index{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--ink-light);
+    text-align:center;
+    width: 30px;
+  }
+
+  .btn-remove{
+    background:none; border:none; cursor:pointer;
+    color: var(--ledger-red);
+    font-size: 16px;
+    padding: 4px 8px;
+  }
+  .btn-remove:hover{ opacity:0.7; }
+
+  .add-row{
+    margin-top: 14px;
+    display:flex; justify-content:flex-start;
+  }
+
+  button.add-btn{
+    background: var(--ink);
+    color: var(--paper);
+    border:none;
+    padding: 9px 18px;
+    border-radius: 4px;
+    font-family:'Tajawal', sans-serif;
+    font-size: 14px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  button.add-btn:hover{ background: var(--ink-light); }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 560px){
+    .field-grid{ grid-template-columns: 1fr; }
+  }
+  .field{
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .field label{
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+
+  .error-text{
+    font-size: 12px;
+    color: var(--ledger-red);
+    min-height: 16px;
+    margin-top: 4px;
+  }
+
+  .compute-btn{
+    display:block;
+    margin: 8px auto 0;
+    background: var(--gold);
+    color: #fff;
+    border:none;
+    padding: 12px 40px;
+    border-radius: 4px;
+    font-family:'Amiri', serif;
+    font-size: 18px;
+    cursor:pointer;
+    letter-spacing: 0.5px;
+  }
+  .compute-btn:hover{ background: var(--gold-soft); }
+
+  .seals{
+    display:flex;
+    gap: 28px;
+    justify-content:center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+  }
+
+  .seal{
+    width: 168px; height: 168px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    position: relative;
+    transform: rotate(-4deg);
+    background: rgba(255,255,255,0.4);
+  }
+  .seal:nth-child(2){ transform: rotate(3deg); border-color: var(--gold); }
+  .seal::before{
+    content:"";
+    position:absolute;
+    inset: 8px;
+    border: 1px dashed currentColor;
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+  .seal .label{
+    font-family:'Amiri', serif;
+    font-size: 13px;
+    color: inherit;
+    margin-bottom: 4px;
+  }
+  .seal .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 30px;
+    font-weight:600;
+    color: inherit;
+  }
+  .seal.semester{ color: var(--ink); }
+  .seal.cumulative{ color: var(--gold); }
+
+  .result-note{
+    text-align:center;
+    font-size: 13px;
+    color: var(--ink-light);
+    margin-top: 16px;
+  }
+
+  .hidden{ display:none; }
+
+  .subj-repeat-cell{
+    text-align:center;
+    width: 60px;
+  }
+  .subj-repeat-cell input[type="checkbox"]{
+    width: 18px; height:18px;
+    cursor: pointer;
+    accent-color: var(--gold);
+  }
+  .prev-mark-input{
+    margin-top:6px;
+  }
+  .prev-mark-input input{
+    background: #FBF6E9;
+  }
+  .prev-mark-input.hidden{ display:none; }
+  .tag-repeat{
+    font-size:11px;
+    color: var(--gold);
+    display:block;
+    margin-top:2px;
+  }
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color: var(--ink-light);
+    margin-top: 40px;
+    opacity:0.7;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <h1>كشف علامات الفصل الدراسي</h1>
+    <div class="rule"></div>
+    <div class="subtitle">حساب المعدل الفصلي والمعدل التراكمي — العلامات المقبولة بين 35 و100</div>
+  </header>
+
+  <div class="card">
+    <h2><span class="num">١</span> مواد الفصل الحالي</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="row-index">رقم المادة</th>
+          <th style="width:110px">العلامة</th>
+          <th style="width:110px">الساعات المعتمدة</th>
+          <th class="subj-repeat-cell">معادة؟</th>
+          <th style="width:40px"></th>
+        </tr>
+      </thead>
+      <tbody id="subjectsBody"></tbody>
+    </table>
+    <div class="add-row">
+      <button class="add-btn" id="addRowBtn">+ إضافة مادة</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">٢</span> السجل الأكاديمي السابق</h2>
+    <div class="field-grid">
+      <div class="field">
+        <label for="prevHours">مجموع الساعات المعتمدة المُنجزة قبل هذا الفصل</label>
+        <input type="number" id="prevHours" placeholder="0" min="0" step="0.5" inputmode="decimal" value="0">
+      </div>
+      <div class="field">
+        <label for="prevGpa">المعدل التراكمي السابق (قبل هذا الفصل)</label>
+        <input type="number" id="prevGpa" placeholder="0" min="0" max="100" step="0.01" inputmode="decimal" value="0">
+      </div>
+    </div>
+  </div>
+
+  <button class="compute-btn" id="computeBtn">احسب المعدل</button>
+  <div class="error-text" id="globalError" style="text-align:center; font-size:14px;"></div>
+
+  <div class="seals hidden" id="sealsWrap">
+    <div class="seal semester">
+      <div class="label">معدل الفصل</div>
+      <div class="value" id="semesterValue">--</div>
+    </div>
+    <div class="seal cumulative">
+      <div class="label">المعدل التراكمي</div>
+      <div class="value" id="cumulativeValue">--</div>
+    </div>
+  </div>
+  <div class="result-note hidden" id="resultNote"></div>
+
+  <footer>كل علامة يجب أن تكون بين 35 و100 — الساعات المعتمدة رقم موجب<br>عند تحديد "معادة" أدخل العلامة السابقة: تُحسب المادة في معدل الفصل بعلامتها الجديدة، وفي التراكمي تُستبدل نقاطها القديمة بالجديدة دون إضافة الساعات مرتين</footer>
+</div>
+
+<script>
+let rowCount = 0;
+const subjectsBody = document.getElementById('subjectsBody');
+const arabicNums = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+function toArabicNum(n){
+  return String(n).split('').map(d => arabicNums[d] || d).join('');
+}
+
+function addRow(){
+  rowCount++;
+  const tr = document.createElement('tr');
+  tr.dataset.rowId = rowCount;
+  tr.innerHTML = `
+    <td class="row-index">${rowCount}</td>
+    <td><input type="number" class="subj-mark" placeholder="35-100" min="35" max="100" step="0.01" inputmode="decimal"></td>
+    <td><input type="number" class="subj-hours" placeholder="3" min="0.5" step="0.5" inputmode="decimal"></td>
+    <td class="subj-repeat-cell"><input type="checkbox" class="subj-repeat" title="حدد إذا كانت المادة معادة"></td>
+    <td><button class="btn-remove" title="حذف المادة">✕</button></td>
+  `;
+  const repeatRow = document.createElement('tr');
+  repeatRow.classList.add('prev-mark-row', 'hidden');
+  repeatRow.innerHTML = `
+    <td></td>
+    <td colspan="3" class="prev-mark-input">
+      <input type="number" class="subj-prevmark" placeholder="العلامة السابقة لهذه المادة (35-100)" min="35" max="100" step="0.01" inputmode="decimal">
+    </td>
+    <td></td>
+  `;
+
+  tr.querySelector('.btn-remove').addEventListener('click', () => {
+    tr.remove();
+    repeatRow.remove();
+    renumberRows();
+  });
+  tr.querySelector('.subj-repeat').addEventListener('change', (e) => {
+    repeatRow.classList.toggle('hidden', !e.target.checked);
+    if(!e.target.checked){
+      repeatRow.querySelector('.subj-prevmark').value = '';
+      repeatRow.querySelector('.subj-prevmark').classList.remove('invalid');
+    }
+  });
+  subjectsBody.appendChild(tr);
+  subjectsBody.appendChild(repeatRow);
+}
+
+function renumberRows(){
+  const mainRows = [...subjectsBody.children].filter(tr => !tr.classList.contains('prev-mark-row'));
+  mainRows.forEach((tr, idx) => {
+    tr.querySelector('.row-index').textContent = idx + 1;
+  });
+}
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+// start with 3 empty rows
+addRow(); addRow(); addRow();
+
+function clearInvalid(){
+  document.querySelectorAll('input.invalid').forEach(el => el.classList.remove('invalid'));
+  document.getElementById('globalError').textContent = '';
+}
+
+document.getElementById('computeBtn').addEventListener('click', () => {
+  clearInvalid();
+  const rows = [...subjectsBody.children].filter(tr => !tr.classList.contains('prev-mark-row'));
+  if(rows.length === 0){
+    document.getElementById('globalError').textContent = 'أضف مادة واحدة على الأقل.';
+    return;
+  }
+
+  // totals for THIS semester's GPA (every course counts normally, repeated or not)
+  let semesterPoints = 0;
+  let semesterHours = 0;
+
+  // adjustments to apply on top of the previous cumulative record
+  let newHoursToAdd = 0;      // hours from courses NOT taken before (adds to cumulative hours)
+  let pointsAdjustment = 0;   // net change in cumulative points (new points minus any replaced old points)
+
+  let hasError = false;
+
+  rows.forEach(tr => {
+    const markInput = tr.querySelector('.subj-mark');
+    const hoursInput = tr.querySelector('.subj-hours');
+    const repeatCheckbox = tr.querySelector('.subj-repeat');
+    const mark = parseFloat(markInput.value);
+    const hours = parseFloat(hoursInput.value);
+    const isRepeated = repeatCheckbox.checked;
+
+    if(isNaN(mark) || mark < 35 || mark > 100){
+      markInput.classList.add('invalid');
+      hasError = true;
+    }
+    if(isNaN(hours) || hours <= 0){
+      hoursInput.classList.add('invalid');
+      hasError = true;
+    }
+
+    let prevMark = null;
+    if(isRepeated){
+      const repeatRow = tr.nextElementSibling;
+      const prevMarkInput = repeatRow.querySelector('.subj-prevmark');
+      prevMark = parseFloat(prevMarkInput.value);
+      if(isNaN(prevMark) || prevMark < 35 || prevMark > 100){
+        prevMarkInput.classList.add('invalid');
+        hasError = true;
+      }
+    }
+
+    if(!isNaN(mark) && !isNaN(hours)){
+      semesterPoints += mark * hours;
+      semesterHours += hours;
+
+      if(isRepeated && !isNaN(prevMark)){
+        // hours already counted in the previous cumulative record — don't add again
+        // only swap the old points for the new ones
+        pointsAdjustment += (mark - prevMark) * hours;
+      } else if(!isRepeated){
+        // brand-new course: adds fresh hours + points to the cumulative record
+        newHoursToAdd += hours;
+        pointsAdjustment += mark * hours;
+      }
+    }
+  });
+
+  if(hasError){
+    document.getElementById('globalError').textContent = 'الرجاء تصحيح الحقول المظللة: العلامة بين 35-100 والساعات أكبر من صفر (وأدخل العلامة السابقة لكل مادة معادة).';
+    document.getElementById('sealsWrap').classList.add('hidden');
+    document.getElementById('resultNote').classList.add('hidden');
+    return;
+  }
+
+  const semesterGpa = semesterPoints / semesterHours;
+
+  const prevHoursInput = document.getElementById('prevHours');
+  const prevGpaInput = document.getElementById('prevGpa');
+  const prevHours = parseFloat(prevHoursInput.value) || 0;
+  const prevGpa = parseFloat(prevGpaInput.value) || 0;
+
+  if(prevHours < 0 || prevGpa < 0 || prevGpa > 100){
+    document.getElementById('globalError').textContent = 'تحقق من قيم السجل الأكاديمي السابق.';
+    return;
+  }
+
+  const prevPoints = prevGpa * prevHours;
+  const cumulativeHours = prevHours + newHoursToAdd;
+  const cumulativeGpa = (prevPoints + pointsAdjustment) / cumulativeHours;
+
+  document.getElementById('semesterValue').textContent = semesterGpa.toFixed(2);
+  document.getElementById('cumulativeValue').textContent = cumulativeGpa.toFixed(2);
+  document.getElementById('sealsWrap').classList.remove('hidden');
+
+  const note = document.getElementById('resultNote');
+  note.classList.remove('hidden');
+  if(cumulativeGpa >= 85){
+    note.textContent = 'تقدير: امتياز';
+  } else if(cumulativeGpa >= 75){
+    note.textContent = 'تقدير: جيد جدًا';
+  } else if(cumulativeGpa >= 65){
+    note.textContent = 'تقدير: جيد';
+  } else if(cumulativeGpa >= 50){
+    note.textContent = 'تقدير: مقبول';
+  } else {
+    note.textContent = 'تقدير: ضعيف';
+  }
+});
+</script>
+</body>
+</html>
